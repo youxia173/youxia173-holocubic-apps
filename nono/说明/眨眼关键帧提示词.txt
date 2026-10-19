@@ -1,0 +1,4 @@
+Tool: built-in imagegen
+Reference/edit target: 形象参考/nono-initial-source.png
+Output: 形象参考/nono-blink-source.png
+Edit target: the attached transparent Nono initial character sprite. Make a precise animation blink keyframe. Change ONLY the girl's two eyes: both eyes are gently fully closed in a relaxed happy blink, with neat dark curved eyelashes matching her existing anime art style. Keep every other pixel/feature as unchanged as possible: exact same canvas proportions, exact same full-body framing, head and face positions, head tilt, hair, triangle clip, mouth, body, clothing, hand positions, feet, companion robot, shading and colors. Do not move, crop, resize or redraw the character or the robot. Preserve the existing fully transparent background. Single full body character with small robot. No sheet, no labels, no background. This is a matched closed-eyes cel for the provided open-eyes cel, not a new illustration.

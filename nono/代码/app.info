@@ -1,0 +1,17 @@
+name = 桌宠诺诺
+name_zh_cn = 桌宠诺诺
+name_zh_tw = 桌寵諾諾
+name_en = Nono Desktop Pet
+name_ja = ノノ
+name_zh = 桌宠诺诺
+icon = main.png
+version = 1.0.6
+kind = app
+category = tool
+catalog_scope = community
+entry = main.lua
+author = 游侠173
+description = Nono pet: complete meal, sleep, reading, gaming, cat-petting and laser play sequences, independent durations and persistent clock
+description_zh_cn = 初始科技诺诺与白猫：吃饭睡觉看书游戏撸猫激光逗猫完整流程、独立时长、320×240共用画面与常驻时钟
+description_en = Nono pet: complete meal, sleep, reading, gaming, cat-petting and laser play sequences, independent durations and persistent clock
+

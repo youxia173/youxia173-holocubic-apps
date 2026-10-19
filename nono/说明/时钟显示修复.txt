@@ -1,0 +1,4 @@
+V0.7.0 时钟显示修复
+设备时间继续使用 time.getlocal()，与时钟应用共用系统时间。
+修正时钟数字及底部文字 PNG 的 LVGL SD 路径为 S:/apps/nono/，GIF 路径保持不变。
+设备已覆盖 main.lua 并重启，接口返回有效时间；网页状态增加 clock 字段。
