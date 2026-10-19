@@ -1,1 +1,67 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>桌宠诺诺 V1.0.6</title><h1>桌宠诺诺 V1.0.6</h1><p>睡觉完整流程：站立、坐下躺好、循环呼吸、醒来起身、回到站立。白猫陪伴睡眠与待机。吃饭、睡眠、看书、游戏和撸猫均有完整准备及结束动作，分别独立设置循环时长，按完整循环播放后自然结束，底部时间常驻。</p><p>设备可在网页设置对应活动时长或 frame-layout.json 的 loop_seconds设置5–600秒；网页设置可直接调整并保存，下次活动生效。左右键手动切换，下键恢复自动，上键遮挡测试。支持属性等级、需求触发双倍恢复、上下班倒计时与天气。</p><p>新增白猫蹭小腿→蹲下摸头→抱入怀里→抚摸循环→放下白猫→回待机。撸猫时长独立设置。</p><p>抱猫姿势修正：背朝上、四脚朝下。先托稳再抬离地面，放下时保持同一蹲姿及人物比例。</p><p>新增激光逗猫：取笔→红点引导猫扑击追逐→收笔→待机。逗猫时长独立设置，循环完整结束后收尾。</p><p>V1.0.5：全新诺诺与白猫图标，网页设置支持自动生活、活动切换和独立时长。启动后访问应用网页即可设置。</p><p>V1.0.5：小字加粗，今日和明日天气补充对应图标。</p><p>V1.0.5：设备独立完整帧GIF，兼容黑底播放、25FPS、人物落地校正和分段解码状态重置。</p><p>V1.0.5：设备改用逐帧CRC校验的RGB565画布播放，绕开GIF路径；保留角色落地校正、独立循环时长和透明Windows素材。</p><p>V1.0.6：每次进食随机选择饭盒或拉面，共用进食时长；拉面包含坐下准备、可循环吃面、起身收碗回待机。保留逐帧CRC校验与需求触发双倍恢复。</p></html>
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>桌宠诺诺 - 应用介绍</title><style>
+    :root {
+      color-scheme: light;
+      --bg: #f1f6fc;
+      --card: #ffffff;
+      --ink: #20334d;
+      --muted: #64758b;
+      --line: #dce7f3;
+      --gold: #397bb5;
+      --gold-soft: #edf5ff;
+      --chip: #e8f3ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .page { width: min(100%, 760px); margin: 0 auto; padding: 28px 20px 48px; }
+    .hero { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+    .icon { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; background: #dceeff; }
+    .kicker { margin: 0; color: var(--gold); font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+    h1 { margin: 2px 0 4px; font-size: 36px; line-height: 1.1; letter-spacing: 0; }
+    .subtitle { margin: 0; color: var(--muted); font-size: 18px; }
+    .lang {
+      min-width: 52px; min-height: 40px; padding: 0 12px;
+      border: 1px solid var(--line); border-radius: 999px;
+      background: var(--card); color: var(--ink); font-weight: 700; cursor: pointer;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 14px; }
+    .chip {
+      padding: 6px 12px; border-radius: 999px;
+      background: var(--chip); color: var(--gold); font-size: 14px; font-weight: 650;
+    }
+    .lead { margin: 0 0 22px; font-size: 17px; }
+    section {
+      margin-top: 14px; padding: 18px 18px 8px;
+      border: 1px solid var(--line); border-radius: 16px; background: var(--card);
+    }
+    .label { margin: 0; color: var(--gold); font-size: 13px; font-weight: 750; }
+    h2 { margin: 2px 0 12px; font-size: 22px; }
+    ul { margin: 0 0 12px; padding-left: 1.2em; }
+    li { margin: 6px 0; }
+    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .meta div { padding: 12px; border-radius: 12px; background: var(--gold-soft); }
+    .meta span { display: block; color: var(--muted); font-size: 13px; }
+    .meta strong { font-size: 20px; }
+    .keys { display: grid; gap: 8px; margin: 0 0 12px; }
+    .key {
+      display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 10px;
+      padding: 8px 0; border-top: 1px solid var(--line);
+    }
+    .key b { color: var(--ink); }
+    .key span { color: var(--muted); }
+    .note { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
+    footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 640px) {
+      h1 { font-size: 30px; }
+      .hero { grid-template-columns: 56px minmax(0, 1fr); }
+      .lang { grid-column: 1 / -1; justify-self: start; }
+      .meta, .key { grid-template-columns: 1fr; }
+    }
+  </style></head><body>
+<main class="page"><header class="hero"><img class="icon" src="main.png" alt="诺诺与白猫"><div><p class="kicker" data-i18n="kicker">社区应用 · HoloCubic</p><h1 data-i18n="title">桌宠诺诺</h1><p class="subtitle" data-i18n="subtitle">诺诺和白猫，陪你度过每一天</p></div><button class="lang" id="langBtn" type="button" aria-label="Switch language">EN</button></header><div class="chips"><span class="chip" data-i18n="chip0">完整生活动作</span><span class="chip" data-i18n="chip1">属性养成</span><span class="chip" data-i18n="chip2">时钟与天气</span></div><p class="lead" data-i18n="lead">银蓝发色、科技装束的诺诺，带着一只白猫住进你的 Cubic。她会吃饭、睡觉、看书、打游戏，也会抱猫轻抚、用激光笔逗猫；在日常陪伴中，慢慢积累经验、提升等级。</p><section><p class="label" data-i18n="lifeLabel">生活</p><h2 data-i18n="lifeTitle">从待机出发，也好好收尾</h2><ul><li data-i18n="life0">进食时随机选择饭盒或拉面，共用进食时长。吃完收好餐具，再回到站立待机。</li><li data-i18n="life1">睡觉、看书、打游戏、抱猫轻抚、激光逗猫，都有准备、循环和结束动作。</li><li data-i18n="life2">网页可分别设置活动循环时长，范围 5–600 秒。按完整循环向上取整，准备与收尾时间另计。</li></ul></section><section><p class="label" data-i18n="growthLabel">养成</p><h2 data-i18n="growthTitle">照顾需要，一起成长</h2><ul><li data-i18n="growth0">饱食：吃饭恢复；低于 30 时，自动安排进食，目标恢复至 80。</li><li data-i18n="growth1">心情：打游戏、撸猫、激光逗猫恢复；低于 35 时，自动安排玩耍，目标恢复至 80。</li><li data-i18n="growth2">活力：睡觉恢复；低于 25 时，自动安排睡眠，目标恢复至 85。</li><li data-i18n="growth3">等级：看书学习积累经验，经验条满后升级，多余经验保留。</li><li data-i18n="growth4">自动生活会在当前活动结束后照顾较紧迫的需求。只有低于阈值触发的恢复活动享受双倍增长，手动活动按正常速度恢复。</li></ul></section><section><p class="label" data-i18n="dailyLabel">桌面陪伴</p><h2 data-i18n="dailyTitle">时间、天气与上下班提醒</h2><ul><li data-i18n="daily0">底部显示时、分、秒，以及星期、月日；两侧分别显示今日和明日天气。</li><li data-i18n="daily1">天气直接读取 Cubic Control 的天气地址设置，无需在诺诺里重复设置。天气更新需要联网。</li><li data-i18n="daily2">网页可设置上班和下班时间：零点后倒计时至上班，上班后倒计时至下班。</li><li data-i18n="daily3">头顶属性条可始终显示，或仅数值变化时显示；显示时长可调，默认 10 秒。属性与网页设置会保存。</li></ul></section><section><p class="label" data-i18n="controlsLabel">操作</p><h2 data-i18n="controlsTitle">机身按键与网页设置</h2><div class="keys"><div class="key"><b data-i18n="key0">左 / 右</b><span data-i18n="val0">切换活动，进入手动模式</span></div><div class="key"><b data-i18n="key1">下键</b><span data-i18n="val1">恢复自动生活</span></div><div class="key"><b data-i18n="key2">上键</b><span data-i18n="val2">切换顶部遮挡测试</span></div><div class="key"><b data-i18n="key3">应用网页</b><span data-i18n="val3">设置活动时长、属性条和上下班时间，也可手动播放活动</span></div></div></section><section><p class="label" data-i18n="infoLabel">应用信息</p><h2 data-i18n="infoTitle">版本与大小</h2><div class="meta"><div><span data-i18n="version">版本号</span><strong>1.0.6</strong></div><div><span data-i18n="size">完整安装包</span><strong data-i18n="sizeValue">约 36.3 MB</strong></div></div></section><p class="note" data-i18n="note">提示：启动诺诺后打开应用网页即可调整设置，活动时长更改在下一轮生效。手动播放会暂停自动生活，按下键可恢复。</p><footer data-i18n="foot">作者：游侠173 · 为 HoloCubic 320 × 240 画面设计</footer></main>
+<script>const dict={"zh": {"kicker": "社区应用 · HoloCubic", "title": "桌宠诺诺", "subtitle": "诺诺和白猫，陪你度过每一天", "chip0": "完整生活动作", "chip1": "属性养成", "chip2": "时钟与天气", "lead": "银蓝发色、科技装束的诺诺，带着一只白猫住进你的 Cubic。她会吃饭、睡觉、看书、打游戏，也会抱猫轻抚、用激光笔逗猫；在日常陪伴中，慢慢积累经验、提升等级。", "lifeLabel": "生活", "lifeTitle": "从待机出发，也好好收尾", "life0": "进食时随机选择饭盒或拉面，共用进食时长。吃完收好餐具，再回到站立待机。", "life1": "睡觉、看书、打游戏、抱猫轻抚、激光逗猫，都有准备、循环和结束动作。", "life2": "网页可分别设置活动循环时长，范围 5–600 秒。按完整循环向上取整，准备与收尾时间另计。", "growthLabel": "养成", "growthTitle": "照顾需要，一起成长", "growth0": "饱食：吃饭恢复；低于 30 时，自动安排进食，目标恢复至 80。", "growth1": "心情：打游戏、撸猫、激光逗猫恢复；低于 35 时，自动安排玩耍，目标恢复至 80。", "growth2": "活力：睡觉恢复；低于 25 时，自动安排睡眠，目标恢复至 85。", "growth3": "等级：看书学习积累经验，经验条满后升级，多余经验保留。", "growth4": "自动生活会在当前活动结束后照顾较紧迫的需求。只有低于阈值触发的恢复活动享受双倍增长，手动活动按正常速度恢复。", "dailyLabel": "桌面陪伴", "dailyTitle": "时间、天气与上下班提醒", "daily0": "底部显示时、分、秒，以及星期、月日；两侧分别显示今日和明日天气。", "daily1": "天气直接读取 Cubic Control 的天气地址设置，无需在诺诺里重复设置。天气更新需要联网。", "daily2": "网页可设置上班和下班时间：零点后倒计时至上班，上班后倒计时至下班。", "daily3": "头顶属性条可始终显示，或仅数值变化时显示；显示时长可调，默认 10 秒。属性与网页设置会保存。", "controlsLabel": "操作", "controlsTitle": "机身按键与网页设置", "key0": "左 / 右", "val0": "切换活动，进入手动模式", "key1": "下键", "val1": "恢复自动生活", "key2": "上键", "val2": "切换顶部遮挡测试", "key3": "应用网页", "val3": "设置活动时长、属性条和上下班时间，也可手动播放活动", "infoLabel": "应用信息", "infoTitle": "版本与大小", "version": "版本号", "size": "完整安装包", "sizeValue": "约 36.3 MB", "note": "提示：启动诺诺后打开应用网页即可调整设置，活动时长更改在下一轮生效。手动播放会暂停自动生活，按下键可恢复。", "foot": "作者：游侠173 · 为 HoloCubic 320 × 240 画面设计"}, "en": {"kicker": "Community app · HoloCubic", "title": "Nono Desktop Pet", "subtitle": "A little companion, and her white cat", "chip0": "Daily routines", "chip1": "Needs & growth", "chip2": "Clock & weather", "lead": "Nono brings her silver-blue hair, futuristic outfit and white cat to your Cubic. Watch her eat, sleep, read, play games, cuddle her cat and lead it on a laser chase, while gaining experience and levels.", "lifeLabel": "Daily life", "lifeTitle": "Every routine has a beginning and an ending", "life0": "Each meal randomly uses a lunchbox or ramen, sharing one meal duration. Nono puts her dishes away before returning to idle.", "life1": "Sleep, reading, gaming, cat cuddles and laser play each have an introduction, a repeatable middle and an ending.", "life2": "Set each activity loop to 5–600 seconds in the web settings. Time rounds up to a complete loop; preparation and ending take extra time.", "growthLabel": "Growth", "growthTitle": "Care for her needs and watch her grow", "growth0": "Satiety: meals restore it. Below 30, automatic feeding aims to restore it to 80.", "growth1": "Mood: gaming, cuddles and laser play restore it. Below 35, automatic play aims for 80.", "growth2": "Energy: sleep restores it. Below 25, automatic sleep aims for 85.", "growth3": "Level: reading earns experience. A full bar levels Nono up, carrying excess experience forward.", "growth4": "Automatic life attends to urgent needs after the current routine ends. Only recovery triggered by low needs earns double gains; manual activities use normal rates.", "dailyLabel": "At a glance", "dailyTitle": "Time, weather and your workday", "daily0": "The footer shows hours, minutes, seconds, weekday and date, with today’s and tomorrow’s weather on either side.", "daily1": "Weather uses the location configured in Cubic Control. No duplicate location setup is needed in Nono. Weather updates require a network connection.", "daily2": "Set work start and end times in the web settings: after midnight, count down to work; once work starts, count down to the end of the day.", "daily3": "Show needs bars always or only when values change, with an adjustable duration of 10 seconds by default. Needs and web settings are saved.", "controlsLabel": "Controls", "controlsTitle": "Device buttons and web settings", "key0": "Left / Right", "val0": "Switch activity and enter manual mode", "key1": "Down", "val1": "Resume automatic life", "key2": "Up", "val2": "Toggle the top-area mask test", "key3": "App web page", "val3": "Set activity durations, needs bars and work hours, or play an activity manually", "infoLabel": "App info", "infoTitle": "Version and size", "version": "Version", "size": "Full package", "sizeValue": "Approx. 36.3 MB", "note": "Tip: launch Nono, then open its web page to adjust settings. Duration changes take effect on the next routine. Manual playback pauses automatic life; press Down to resume.", "foot": "Author: 游侠173 · Designed for the HoloCubic 320 × 240 display"}};let lang='zh';const btn=document.getElementById('langBtn');function apply(){document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=dict[lang][el.dataset.i18n]});btn.textContent=lang==='zh'?'EN':'中文';document.documentElement.lang=lang==='zh'?'zh-CN':'en';document.title=lang==='zh'?'桌宠诺诺 - 应用介绍':'Nono - App info'}btn.addEventListener('click',()=>{lang=lang==='zh'?'en':'zh';apply()});apply();</script></body></html>
