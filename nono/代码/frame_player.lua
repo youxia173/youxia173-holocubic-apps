@@ -4,18 +4,41 @@ function M.new(dir,parent,codec)
  assert(lv_canvas_create and lv_canvas_blit_rgb565 and zlib and zlib.inflate and zlib.crc32,'RGB565 playback APIs missing')
  P.canvas=assert(lv_canvas_create(parent,200,150,rawget(_G,'LV_IMG_CF_TRUE_COLOR')or 4))
  local function close_file()if P.fd then pcall(function()P.fd:close()end);P.fd=nil end end
- function P.close()close_file();P.meta=nil;P.frame=0 end
- function P.load(path,x,y)
-  P.close();P.error=nil
+ function P.close()close_file();P.meta=nil;P.sequence=nil;P.segment=nil;P.frame=0 end
+ local function read_index(path)
+  close_file();P.meta=nil;P.frame=0
+  collectgarbage('collect')
   local raw=assert(file.getcontents(dir..path),'Missing frame index');local m=assert(codec.decode(raw))
+  raw=nil
   assert(m.width==200 and m.height==150 and m.frame_ms==40 and #m.frames>0,'Invalid frame index')
   P.path=dir..(path:match('^(.*[/])')or '')..m.data
   assert(file.exists(P.path),'Missing frame data');P.meta=m
+ end
+ function P.load(path,x,y)
+  P.close();P.error=nil
+  local raw=assert(file.getcontents(dir..path),'Missing frame index');local m=assert(codec.decode(raw))
+  if m.segments then
+   assert(#m.segments>0,'Empty frame sequence');P.sequence=m.segments
+  else
+   assert(m.width==200 and m.height==150 and m.frame_ms==40 and #m.frames>0,'Invalid frame index')
+   P.path=dir..(path:match('^(.*[/])')or '')..m.data
+   assert(file.exists(P.path),'Missing frame data');P.meta=m
+  end
   lv_obj_set_pos(P.canvas,x,y)
   -- A transient first-frame read keeps the preceding verified picture; the timer retries.
   P.show(0);return true
  end
  function P.show(ms)
+  if P.sequence then
+   local elapsed=math.max(0,ms);local which=#P.sequence
+   for n,s in ipairs(P.sequence)do if elapsed<s.duration_ms then which=n;break end;elapsed=elapsed-s.duration_ms end
+   if which~=P.segment then
+    local ok,err=pcall(read_index,P.sequence[which].file)
+    if not ok then P.error=tostring(err);P.failure_ms=1001;return false,P.error end
+    P.segment=which
+   end
+   ms=elapsed
+  end
   if not P.meta then return end
   local i=math.min(#P.meta.frames,math.floor(math.max(0,ms)/P.meta.frame_ms)+1)
   if i==P.frame then return end

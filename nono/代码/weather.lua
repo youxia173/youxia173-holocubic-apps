@@ -1,5 +1,7 @@
 local M={}
 function M.new(A,dir,codec)
+ local calendar=assert(loadfile(dir..'calendar.lua'))()
+ local history={};local historyAddress
  local W={status='等待天气',days={},location='',next_ms=0,busy=false,serial=0}
  local function decode(body)
   if body and zlib and zlib.isgzip and zlib.isgzip(body)then body=zlib.gunzip(body)end
@@ -21,7 +23,11 @@ function M.new(A,dir,codec)
   local address=settings.weather_address or settings.weatherAddress or ''
   local location=settings.weather_location_id or ''
   if (settings.weather_location_address or settings.weather_location_raw)~=address then location=''end
-  if address~=W.address then W.days={};W.address=address end
+  if address~=W.address then
+   W.days={};W.fetched=nil;W.address=address;history={};historyAddress=address
+   local saved=decode(file.getcontents(dir..'weather-history.json'))
+   if saved and saved.address==address and type(saved.days)=='table'then history=saved.days end
+  end
   W.location=settings.weather_city or address
   if address=='' and location=='' then W.status='请设置天气地址';return end
   if not(http and http.cubicserver and http.cubicserver.get)then W.status='天气接口不可用';return end
@@ -30,6 +36,15 @@ function M.new(A,dir,codec)
   local function forecast(id)
    request('/v1/weather/3d?location='..enc(id)..'&unit=m&lang=zh',function(status,d)
     if status~=200 or not d or tostring(d.code)~='200' or type(d.daily)~='table'then failed();return end
+    local oldest=t and t.year and t.mon and t.day and calendar.date(calendar.shift(t.year,t.mon,t.day,-7))
+    if oldest then
+     local merged={};for _,v in ipairs(history)do if type(v.fxDate)=='string'and v.fxDate>=oldest then merged[v.fxDate]=v end end
+     for _,v in ipairs(d.daily)do if type(v.fxDate)=='string'then merged[v.fxDate]=v end end
+     history={};for _,v in pairs(merged)do history[#history+1]=v end
+     table.sort(history,function(a,b)return a.fxDate<b.fxDate end)
+     while #history>12 do table.remove(history,1)end
+     pcall(function()file.putcontents(dir..'weather-history.json',codec.encode({address=historyAddress,days=history}))end)
+    end
     W.days=d.daily;W.fetched=A.elapsed_ms;W.busy=false;W.status='已更新 · '..W.location
    end)
   end
@@ -41,14 +56,14 @@ function M.new(A,dir,codec)
    W.location=first.name or address;forecast(first.id)
   end)end
  end
- local function date_next(y,m,d)
-  local leap=y%4==0 and(y%100~=0 or y%400==0);local md={31,leap and 29 or 28,31,30,31,30,31,31,30,31,30,31};d=d+1
-  if d>md[m]then d=1;m=m+1;if m>12 then m=1;y=y+1 end end
-  return string.format('%04d-%02d-%02d',y,m,d)
- end
  function W.day(t,ahead)
-  if not t or not t.year or not t.mon or not t.day or not W.fetched or A.elapsed_ms-W.fetched>21600000 then return nil end
-  local date=ahead==1 and date_next(t.year,t.mon,t.day)or string.format('%04d-%02d-%02d',t.year,t.mon,t.day)
+  if not t or not t.year or not t.mon or not t.day then return nil end
+  local date=calendar.date(calendar.shift(t.year,t.mon,t.day,ahead))
+  if ahead==-1 then
+   for _,d in ipairs(history)do if d.fxDate==date then return d end end
+   return nil
+  end
+  if not W.fetched or A.elapsed_ms-W.fetched>21600000 then return nil end
   for _,d in ipairs(W.days)do if d.fxDate==date then return d end end
  end
  function W.icon(d)

@@ -33,16 +33,28 @@ function M.new(A,dir,panel)
   local image=lv_img_create(A.root);lv_obj_set_pos(image,x,201)
   H.weather[i]={label(A.root,x,187,75),label(A.root,x+22,204,53),label(A.root,x,221,75),icon=image}
  end
- local days={'日','一','二','三','四','五','六'}
+ H.birthday_images={}
+ for _,spec in ipairs({{'header',0},{'footer',182}})do
+  local o=lv_img_create(A.root);lv_img_set_src(o,'S:/apps/nono/assets/ui/birthday-'..spec[1]..'.png');lv_obj_set_pos(o,0,spec[2]);lv_obj_add_flag(o,LV_OBJ_FLAG_HIDDEN);H.birthday_images[#H.birthday_images+1]=o
+ end
+ local days={'日' ,'一','二','三','四','五','六'}
  local function minutes(v)return tonumber(v:sub(1,2))*60+tonumber(v:sub(4,5))end
  function H.update(t)
+  local birthday=A.birthday_active(t)
+  local function visible(o,on)if on then lv_obj_clear_flag(o,LV_OBJ_FLAG_HIDDEN)else lv_obj_add_flag(o,LV_OBJ_FLAG_HIDDEN)end end
+  if H.birthday~=birthday then
+   for _,o in ipairs(H.birthday_images)do visible(o,birthday)end
+   visible(H.work,not birthday)
+   for _,items in ipairs(H.weather)do for j=1,3 do visible(items[j],not birthday)end end
+   H.birthday=birthday
+  end
   local n=A.needs;local values={n.satiety,n.mood,n.energy,n.xp/n.required()*100}
   for i,b in ipairs(H.bars)do
    text(b.label,i==4 and string.format('等级 Lv.%d  %d/%d',n.level,math.floor(n.xp),n.required())or string.format('%s  %.0f',b.name,values[i]))
    local width=math.max(1,math.floor(142*values[i]/100))
    if b.width~=width then lv_obj_set_size(b.bar,width,3);b.width=width end
   end
-  local shown=A.needsDisplay=='always' or A.elapsed_ms-n.changed_at<A.needsDisplaySeconds*1000
+  local shown=not birthday and A.needsDisplay~='hidden' and(A.needsDisplay=='always' or A.elapsed_ms-n.changed_at<A.needsDisplaySeconds*1000)
   if H.shown~=shown then
    if shown then lv_obj_clear_flag(H.head,LV_OBJ_FLAG_HIDDEN)else lv_obj_add_flag(H.head,LV_OBJ_FLAG_HIDDEN)end
    H.shown=shown
@@ -57,12 +69,24 @@ function M.new(A,dir,panel)
    work=now>=finish and '已到下班时间' or string.format('%s%d小时%d分',now<start and '距上班 'or '距下班 ',math.floor(left/60),left%60)
   end
   text(H.work,work)
-  for i,items in ipairs(H.weather)do local d=A.weather.day(t,i-1)
-   local path='S:/apps/nono/assets/ui/weather-'..A.weather.icon(d)..'.png'
-   if items.icon_path~=path then lv_img_set_src(items.icon,path);items.icon_path=path end
-   text(items[1],i==1 and '今日天气'or '明日天气')
-   text(items[2],d and(d.textDay or '--')or '--')
-   text(items[3],d and(tostring(d.tempMin)..'~'..tostring(d.tempMax)..'°C')or '等待更新')
+  for i,items in ipairs(H.weather)do
+   local mode=i==1 and A.leftRegion or A.rightRegion;local x=i==1 and 7 or 239
+   local isweather=mode=='today'or mode=='yesterday'or mode=='tomorrow'
+   if items.isweather~=isweather or items.birthday~=birthday then
+    items.birthday=birthday
+    if isweather and not birthday then lv_obj_clear_flag(items.icon,LV_OBJ_FLAG_HIDDEN)else lv_obj_add_flag(items.icon,LV_OBJ_FLAG_HIDDEN)end
+    lv_obj_set_pos(items[2],x+(isweather and 22 or 0),204);lv_obj_set_size(items[2],isweather and 53 or 75,14);items.isweather=isweather
+   end
+   if isweather then
+    local d=A.weather.day(t,mode=='yesterday'and -1 or mode=='tomorrow'and 1 or 0)
+    local path='S:/apps/nono/assets/ui/weather-'..A.weather.icon(d)..'.png'
+    if items.icon_path~=path then lv_img_set_src(items.icon,path);items.icon_path=path end
+    text(items[1],mode=='yesterday'and'昨天天气*'or mode=='today'and'今日天气'or'明日天气')
+    text(items[2],d and(d.textDay or '--')or '--')
+    text(items[3],d and(tostring(d.tempMin)..'~'..tostring(d.tempMax)..'°C')or(mode=='yesterday'and'暂无记录'or'等待更新'))
+   else
+    local rows=A.calendar.describe(mode,t);for j=1,3 do text(items[j],rows[j])end
+   end
   end
  end
  function H.free()if font and lv_font_free then lv_font_free(font);font=nil end end

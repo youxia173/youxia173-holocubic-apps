@@ -1,5 +1,5 @@
 {
-  "version": "1.0.4",
+  "version": "1.1.6",
   "width": 320,
   "height": 240,
   "safe_top": 32,
@@ -167,6 +167,23 @@
       "loop_frame_count": 101,
       "outro_duration_ms": 3530,
       "outro_frame_count": 89
+    },
+    {
+      "id": "dance",
+      "title": "诺诺 · 跳舞",
+      "file": "assets/nono-dance.gif",
+      "kind": "gif",
+      "x": 60,
+      "y": 33,
+      "width": 200,
+      "height": 150,
+      "zoom": 256,
+      "title_file": "assets/ui/title-dance.png",
+      "status_file": "assets/ui/status-dance.png",
+      "duration_ms": 30920,
+      "frame_count": 741,
+      "return_activity": "idle",
+      "manual_only": false
     }
   ],
   "auto_min_cycles": 5,

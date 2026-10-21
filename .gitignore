@@ -2,7 +2,10 @@ gold-miner/归档/
 hidpad/归档/
 hidpad/代码/config.json
 hidpad/代码/modules/
+nono/预览/
+nono/说明/Windows*
 nono/预览/tools/__pycache__/
+nono/代码/**/*.gif
 nono/代码/state.json
 nono/代码/config.json
 
@@ -39,3 +42,7 @@ nono/预览/看书与游戏/
 nono/预览/激光逗猫/
 nono/预览/激光逗猫指向修正版/
 nono/预览/ComfyUI/object_info.json
+
+nono/代码/weather-history.json
+
+nono/代码/holiday-cache.json*
