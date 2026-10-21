@@ -1,7 +1,7 @@
--- Nono V1.1.6: complete activities with independent loop durations.
+-- Nono V1.1.6-lite: lunchbox meals, no witch form.
 local previous=rawget(_G,"NONO_APP")
 if previous and previous.stop then pcall(previous.stop,"reload") end
-local A={version="1.1.6",running=true,fonts={},activity="idle",error=nil}
+local A={version="1.1.6-lite",running=true,fonts={},activity="idle",error=nil}
 _G.NONO_APP=A
 local DIR="/sd/apps/nono/"
 local codec=rawget(_G,"sjson") or rawget(_G,"json")
@@ -93,13 +93,9 @@ function A.set_activity_seconds(id,seconds)
  assert(A.activity_seconds[id],"Activity has no timed loop")
  A.activity_seconds[id]=math.max(5,math.min(600,tonumber(seconds) or 30))
 end
-function A.profession()return not A.pending_activity and A.activity:match('^witch_')and A.activity~='witch_revert'and'witch'or'science'end
+function A.profession()return 'science'end
 function A.request_activity(id)
- if id=='witch_transform'and(A.activity=='witch_idle'or A.activity=='witch_transform')then A.pending_activity=nil;return end
- if A.activity:match('^witch_')and not id:match('^witch_')then
-  A.pending_activity=id;if A.activity=='witch_idle'then A.profession_exit_ms=(math.floor(A.activity_elapsed_ms/current.duration_ms)+1)*current.duration_ms end;return
- end
- A.pending_activity=nil;A.set_activity(id);A.reset_auto()
+ A.set_activity(id);A.reset_auto()
 end
 function A.set_meal_seconds(seconds) A.set_activity_seconds("eat",seconds) end
 local function sequence_total()
@@ -136,11 +132,10 @@ function A.advance(ms)
     end
    end
   end
-  if A.activity_elapsed_ms>=total then local next=current.return_activity;if next=='witch_idle'and A.pending_activity then next='witch_revert'end;if next=='idle'and A.pending_activity then next=A.pending_activity;A.pending_activity=nil end;A.set_activity(next);A.reset_auto() end
+  if A.activity_elapsed_ms>=total then A.set_activity(current.return_activity);A.reset_auto() end
   return
  end
- if A.activity=='witch_idle'and A.pending_activity and A.activity_elapsed_ms>=A.profession_exit_ms then A.set_activity('witch_revert');A.reset_auto();return end
- if A.activity=='witch_idle'or not A.auto then return end
+ if not A.auto then return end
  if current and A.activity_elapsed_ms>=(A.idle_check_ms or 0)+current.duration_ms then
   A.idle_check_ms=math.floor(A.activity_elapsed_ms/current.duration_ms)*current.duration_ms
   local urgent=A.needs.urgent()
@@ -193,7 +188,6 @@ function A.configure(p)
  end
  for _,k in ipairs({'auto','mask'})do if p[k]~=nil and type(p[k])~='boolean' then return false,'开关格式错误'end end
  if p.activity~=nil then local found=false;for _,a in ipairs(layout.assets)do if a.id==p.activity then found=true end end;if not found then return false,'未知活动'end end
- if p.profession~=nil and p.profession~='science'and p.profession~='witch'then return false,'职业外观错误'end
  local display=p.needsDisplay or A.needsDisplay
  local duration=p.needsDisplaySeconds or A.needsDisplaySeconds
  local ws=p.workStart or A.workStart;local we=p.workEnd or A.workEnd
@@ -205,16 +199,13 @@ function A.configure(p)
  local left=p.leftRegion or A.leftRegion;local right=p.rightRegion or A.rightRegion
  if not calendar.valid(left)or not calendar.valid(right)then return false,'底部区域内容错误'end
  local next_auto=A.auto;if p.auto~=nil then next_auto=p.auto end;if p.activity then next_auto=false end
- local next_profession=(p.activity or(p.auto==true and p.profession==nil))and'science'or p.profession or A.profession()
- if p.profession and next_profession~=A.profession()then next_auto=false end
  local next_mask=A.mask_enabled==true;if p.mask~=nil then next_mask=p.mask end
- local ok,err=pcall(function()assert(file.putcontents,'Settings write API missing');local result=file.putcontents(DIR..'user-settings.json',codec.encode({profession=next_profession,seconds=seconds,auto=next_auto,mask=next_mask,leftRegion=left,rightRegion=right,needsDisplay=display,needsDisplaySeconds=duration,birthday=birthday,workStart=ws,workEnd=we}));if result==false then error('设置保存失败')end end)
+ local ok,err=pcall(function()assert(file.putcontents,'Settings write API missing');local result=file.putcontents(DIR..'user-settings.json',codec.encode({seconds=seconds,auto=next_auto,mask=next_mask,leftRegion=left,rightRegion=right,needsDisplay=display,needsDisplaySeconds=duration,birthday=birthday,workStart=ws,workEnd=we}));if result==false then error('设置保存失败')end end)
  if not ok then return false,tostring(err)end
  A.leftRegion=left;A.rightRegion=right;A.needsDisplay=display;A.needsDisplaySeconds=duration;A.workStart=ws;A.workEnd=we
  A.birthday=birthday;if p.birthdayPreview~=nil then A.birthday_preview_until=p.birthdayPreview and A.elapsed_ms+15000 or 0 end
  A.activity_seconds=seconds;A.set_mask(next_mask)
  if p.activity then A.auto=false;A.request_activity(p.activity)
- elseif next_profession~=A.profession()then A.auto=next_auto;A.request_activity(next_profession=='witch'and'witch_transform'or'idle')
  elseif next_auto~=A.auto then A.set_auto(next_auto)end
  return true
 end

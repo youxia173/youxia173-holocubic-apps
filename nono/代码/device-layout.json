@@ -1,5 +1,5 @@
 {
-  "version": "1.1.6",
+  "version": "1.1.6-lite",
   "width": 320,
   "height": 240,
   "safe_top": 32,
@@ -32,7 +32,7 @@
     },
     {
       "id": "eat",
-      "title": "诺诺 · 吃饭（可设时长）",
+      "title": "诺诺 · 吃饭（饭盒）",
       "file": "assets/device/nono-eat-intro.gif",
       "kind": "gif",
       "x": 60,
@@ -51,7 +51,8 @@
       "loop_frame_count": 126,
       "outro_duration_ms": 20280,
       "outro_frame_count": 507,
-      "loop_seconds": 30
+      "loop_seconds": 30,
+      "variant": "rice"
     },
     {
       "id": "sleep",
