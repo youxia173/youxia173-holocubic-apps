@@ -1,7 +1,7 @@
--- Nono V1.1.6-lite: lunchbox meals, no witch form.
+-- Nono V1.1.7-lite: lunchbox meals, no witch form.
 local previous=rawget(_G,"NONO_APP")
 if previous and previous.stop then pcall(previous.stop,"reload") end
-local A={version="1.1.6-lite",running=true,fonts={},activity="idle",error=nil}
+local A={version="1.1.7-lite",running=true,fonts={},activity="idle",error=nil}
 _G.NONO_APP=A
 local DIR="/sd/apps/nono/"
 local codec=rawget(_G,"sjson") or rawget(_G,"json")
@@ -44,7 +44,14 @@ local function load_actor(path)
  local ok,e=A.player.load(path,current.x,current.y-layout.safe_top)
  assert(ok,e)
 end
-function A.render()
+local function playback_fault(err)
+ A.error=tostring(err);A.lastPlaybackError=A.error
+ if not A.load_retry then
+  A.load_retry=true;A.retry_wait=0;A.load_attempts=0
+  A.retry_recovery=A.recoveryBoost and true or nil;A.retry_high=A.highMoodDance
+ end
+end
+local function render_frame()
  if not current then return end
  local elapsed=A.activity_elapsed_ms or 0
  if current.loop_file then
@@ -52,7 +59,12 @@ function A.render()
   elseif A.sequence_phase=='outro'then elapsed=elapsed-current.duration_ms-A.sequence_loop_total end
  else elapsed=elapsed%current.duration_ms end
  local ok,e=A.player.show(elapsed)
- if ok==false and (A.player.failure_ms or 0)>1000 then A.error=e elseif ok==true then A.error=nil end
+ if ok==false and (A.player.failure_ms or 0)>1000 then playback_fault(e) elseif ok==true then A.error=nil end
+end
+function A.render()
+ if A.load_retry then return end
+ local ok,err=pcall(render_frame)
+ if not ok then playback_fault(err)end
 end
 -- Local deterministic RNG, independent of other apps' math.random state.
 local seed=1
@@ -61,6 +73,7 @@ pcall(function()if tmr.now then seed=math.max(1,tmr.now()%2147483647) end end)
 local function pick(count) seed=(seed*48271)%2147483647;return seed%count end
 function A.set_activity(id,recoverySeconds,highMoodDance)
  if not A.running then return false end
+ A.load_retry=false;A.retry_wait=0;A.load_attempts=0
  current=nil
  for _,asset in ipairs(layout.assets) do if asset.id==id then current=asset;break end end
  if current and current.variants then
@@ -82,7 +95,7 @@ function A.set_activity(id,recoverySeconds,highMoodDance)
   end
   load_actor(current.file)
  end)
- if not ok then A.error=tostring(err);clear_actor();print("[Nono] "..A.error) end
+ if not ok then playback_fault(err);clear_actor();print("[Nono] "..A.error) end
  return ok
 end
 A.auto=true;A.elapsed_ms=0;A.activity_seconds={}
@@ -112,6 +125,25 @@ end
 function A.advance(ms)
  A.render()
  if not A.running then return end
+ -- Failed rendering must not freeze the application clock or poison the next
+ -- timer callback. Keep the last verified pixels and retry at bounded intervals.
+ if A.load_retry then
+  A.elapsed_ms=A.elapsed_ms+ms
+  A.needs.advance('idle',ms/1000,0,false,A.elapsed_ms,0)
+  A.retry_wait=(A.retry_wait or 0)+ms
+  if A.retry_wait>=1000 then
+   local attempt=(A.load_attempts or 0)+1
+   A.set_activity(A.activity,A.retry_recovery,A.retry_high)
+   if A.load_retry then
+    A.load_attempts=attempt
+    local idle='idle'
+    if attempt>=3 and A.activity~=idle then
+     A.set_activity(idle);A.reset_auto()
+    end
+   else A.reset_auto()end
+  end
+  return
+ end
  local before=A.activity_elapsed_ms or 0
  local active=0
  if current and current.loop_file then active=math.max(0,math.min(before+ms,current.duration_ms+A.sequence_loop_total)-math.max(before,current.duration_ms)) end
@@ -128,7 +160,7 @@ function A.advance(ms)
     if A.player then
      local path=phase=="loop" and current.loop_file or current.outro_file
      local ok,err=pcall(load_actor,path)
-     if not ok then A.error=tostring(err) end
+     if not ok then playback_fault(err) end
     end
    end
   end
@@ -169,7 +201,7 @@ function A.tick()
  if A.elapsed_ms-(A.last_save or 0)>=30000 then A.last_save=A.elapsed_ms;A.needs.save()end
 end
 function A.snapshot()
- return {ok=true,platform='device',version=A.version,clock=A.clock,activity=A.activity,profession=A.profession(),mealVariant=A.mealVariant,auto=A.auto,mask=A.mask_enabled==true,seconds=A.activity_seconds,error=A.error,needs=A.needs.snapshot(),recoveryBoost=A.recoveryBoost,highMoodDance=A.highMoodDance==true,leftRegion=A.leftRegion,rightRegion=A.rightRegion,needsDisplay=A.needsDisplay,needsDisplaySeconds=A.needsDisplaySeconds,birthday=A.birthday,workStart=A.workStart,workEnd=A.workEnd,holidayStatus=A.holidays.status,weatherStatus=A.weather.status,weatherCity=A.weather.location,sequencePhase=A.sequence_phase,activityElapsedMs=A.activity_elapsed_ms,gifProfile='rgb565-checked-25fps',playback=A.player.stats()}
+ return {loadRetry=A.load_retry==true,loadAttempts=A.load_attempts or 0,lastPlaybackError=A.lastPlaybackError,ok=true,platform='device',version=A.version,clock=A.clock,activity=A.activity,profession=A.profession(),mealVariant=A.mealVariant,auto=A.auto,mask=A.mask_enabled==true,seconds=A.activity_seconds,error=A.error,needs=A.needs.snapshot(),recoveryBoost=A.recoveryBoost,highMoodDance=A.highMoodDance==true,leftRegion=A.leftRegion,rightRegion=A.rightRegion,needsDisplay=A.needsDisplay,needsDisplaySeconds=A.needsDisplaySeconds,birthday=A.birthday,workStart=A.workStart,workEnd=A.workEnd,holidayStatus=A.holidays.status,weatherStatus=A.weather.status,weatherCity=A.weather.location,sequencePhase=A.sequence_phase,activityElapsedMs=A.activity_elapsed_ms,gifProfile='rgb565-checked-25fps',playback=A.player.stats()}
 end
 function A.configure(p)
  local birthday=p.birthday;if birthday==nil then birthday=A.birthday end
